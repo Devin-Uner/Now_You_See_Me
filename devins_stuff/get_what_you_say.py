@@ -12,12 +12,17 @@ with m as source:
                 audio = r.listen(source)
                 # recognize speech using Sphinx
                 try:
-                        if r.recognize_google(audio) == 'abracadabra':
-				f = open('invis.txt', 'w')
-				f.write('1')
-			elif r.recognize_google(audio) == 'off':
-				f = open('invis.txt', 'w')
-				f.write('0')
-			f.close()
+                        text = r.recognize_google(audio)
+                        print(text)
+                        if 'now you don\'t' in text:
+                                print("on")
+                                f = open('invis.txt', 'w')
+                                f.write('1')
+                                f.close()
+                        elif 'Now You See Me' in text:
+                                print("off")
+                                f = open('invis.txt', 'w')
+                                f.write('0')
+                                f.close()
                 except sr.UnknownValueError:
-			pass
+                        pass

@@ -2,6 +2,8 @@ import cv2
 import face_recognition
 import numpy as np
 import copy
+# import matplotlib.pyplot as plt
+# f, ax = plt.subplots(1,2)
 
 video_capture = cv2.VideoCapture(0)
 
@@ -50,30 +52,31 @@ while True:
     # blur = cv2.GaussianBlur(frame,(7,7),0)
     # blur = cv2.blur(frame,(14,14))
 
+    
+
+    if len(backgrounds) < 5:
+        backgrounds += [frame]
+    else:
+        background = backgrounds[0]
+        background = cv2.addWeighted(background, 0.2**(1/8.0), backgrounds[1], 0.2**(1/8.0), 0)
+        background = cv2.addWeighted(background, 0.2**(1/8.0), backgrounds[2], 0.2**(1/4.0), 0)
+        background = cv2.addWeighted(background, 0.2**(1/4.0), backgrounds[3], 0.2**(1/2.0), 0)
+        background = cv2.addWeighted(background, 0.2**(1/2.0), backgrounds[4], 0.2,          0)
+
+        less_background = frame - background
+
+        # ret, thresh = cv2.threshold(less_background, 127, 255, 0)
+        imgray = cv2.cvtColor(less_background,cv2.COLOR_BGR2GRAY)
+        thresh, less_background = cv2.threshold(imgray, 100, 255, cv2.THRESH_BINARY)
+        kernel = np.ones((5,5),np.uint8)
+        dilation = cv2.dilate(less_background,kernel,iterations = 1)
+
     f = open("invis.txt", "r")
     txt = ""
     for line in f:
         txt += line
     f.close()
     if "1" in txt:
-
-        if len(backgrounds) < 5:
-            backgrounds += [frame]
-        else:
-            background = backgrounds[0]
-            background = cv2.addWeighted(background, 0.2**(1/8.0), backgrounds[1], 0.2**(1/8.0), 0)
-            background = cv2.addWeighted(background, 0.2**(1/8.0), backgrounds[2], 0.2**(1/4.0), 0)
-            background = cv2.addWeighted(background, 0.2**(1/4.0), backgrounds[3], 0.2**(1/2.0), 0)
-            background = cv2.addWeighted(background, 0.2**(1/2.0), backgrounds[4], 0.2,          0)
-
-            less_background = frame - background
-
-            # ret, thresh = cv2.threshold(less_background, 127, 255, 0)
-            imgray = cv2.cvtColor(less_background,cv2.COLOR_BGR2GRAY)
-            thresh, less_background = cv2.threshold(imgray, 100, 255, cv2.THRESH_BINARY)
-            kernel = np.ones((5,5),np.uint8)
-            dilation = cv2.dilate(less_background,kernel,iterations = 1)
-
             
         small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
         rgb_small_frame = small_frame[:, :, ::-1]
@@ -135,7 +138,7 @@ while True:
             _, contours, _ = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             target_contours = [x for x in contours if cv2.contourArea(x) > 10000 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) > 0]
 
-            
+            data_frame = copy.deepcopy(frame)
             cv2.drawContours(data_frame, target_contours, -1, (0,255,0), 3)
             
 
@@ -215,8 +218,8 @@ while True:
         
 
     try:
-        cv2.imshow('Video', blurred)
-        cv2.imshow('Video 2', data_frame)
+        # cv2.imshow('Video', blurred)
+        cv2.imshow('Video 2', cv2.resize(np.hstack((blurred, data_frame)), (0,0), fx=0.5, fy=0.5))
     except Exception as e:
         print(e)
     if cv2.waitKey(1) & 0xFF == ord('q'):
