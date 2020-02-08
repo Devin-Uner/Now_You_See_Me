@@ -4,9 +4,9 @@ import speech_recognition as sr
 r = sr.Recognizer()
 m = sr.Microphone()
 with m as source:
-        # r.adjust_for_ambient_noise(source)
-        # print("Set minimum energy threshold to {}".format(r.energy_threshold))
-        r.energy_threshold = 100
+        r.adjust_for_ambient_noise(source)
+        print("Set minimum energy threshold to {}".format(r.energy_threshold))
+        # r.energy_threshold = 4500
         print("Say something!")
         while(1):
                 audio = r.listen(source)
