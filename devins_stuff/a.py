@@ -10,6 +10,7 @@ devin_face_encoding = face_recognition.face_encodings(devin_image)[0]
 fgbg = cv2.createBackgroundSubtractorMOG2()
 kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
 
+
 backgrounds = []
 background = None
 result = None
@@ -17,15 +18,26 @@ result = None
 first_frame = None
 seen_first = False
 
+box = None
+has_one_box = False
+
 while True:
     # Capture frame-by-frame
     ret, frame = video_capture.read()
+
     if not seen_first:
         seen_first = True
         first_frame = frame
         hsv = cv2.cvtColor(first_frame, cv2.COLOR_BGR2HSV)
-        hsv[:,:,2] += 20
-        first_frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
+        h, s, v = cv2.split(hsv)
+
+        lim = 255 - 20
+        v[v > lim] = 255
+        v[v <= lim] += 20
+
+        final_hsv = cv2.merge((h, s, v))
+
+        first_frame_adjusted = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
     blur = cv2.GaussianBlur(frame,(7,7),0)
     blur = cv2.blur(frame,(14,14))
 
@@ -101,24 +113,52 @@ while True:
             center = ((left+right)/2.0,(top+bottom)/2.0)
 
             # ret, thresh = cv2.threshold(imgray, 127, 255, 0)
-            contours, hierarchy = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            _, contours, _ = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             contours = [x for x in contours if cv2.contourArea(x) > 1000 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) > 0]
 
-
-
-
+            
             # cv2.drawContours(frame, contours, -1, (0,255,0), 3)
-            
 
-            # fill the countor
-            cv2.fillPoly(frame, pts =contours, color=(0,0,0))
-            
-            # fill everything in old one with black
-            stencil = np.zeros(first_frame.shape).astype(first_frame.dtype)
-            cv2.fillPoly(stencil, contours, [255,255,255])
-            result = cv2.bitwise_and(first_frame, stencil)
+            if len(contours) > 0:
+                found_box = cv2.boundingRect(contours[0])
+                inside = center[0] > found_box[0] and center[1] > found_box[1] and center[0] < found_box[0]+found_box[2] and center[1] < found_box[1]+found_box[3]
+                print(center[0] > found_box[0], center[1] > found_box[1], center[0] < found_box[0]+found_box[2], center[1] < found_box[1]+found_box[3])
 
-            frame = cv2.bitwise_or(result, frame)
+                if not has_one_box and found_box[2]+found_box[3] < 1000:
+                    box = found_box
+                    has_one_box = True
+                elif has_one_box and (abs(found_box[2]-box[2]) + abs(found_box[3]-box[3]) < 200 and found_box[2]+found_box[3] < 2000) or not inside:
+                    box = found_box
+                else:
+                    print("something got way too big or too small, ignoring that")
+
+
+
+    print(box)
+    if box != None:
+        # cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[0]+box[2]), int(box[1]+box[3])), (0,0,255), 2)
+        
+        # fill the countor
+        # cv2.rectangle(frame, (int(box[0]),int(box[1])), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,0),10)
+        cv2.rectangle(frame, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,0),-1)
+        # # cv2.fillPoly(frame, pts =boxes[0], color=(0,0,0))
+        
+        # fill everything in old one with black
+        stencil = np.zeros(first_frame_adjusted.shape).astype(first_frame_adjusted.dtype)
+        # cv2.fillPoly(stencil, boxes[0], [255,255,255])
+        # cv2.rectangle(stencil, (int(box[0]),int(box[1])), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (255,255,255),10)
+        cv2.rectangle(stencil, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (255,255,255),-1)
+        result = cv2.bitwise_and(first_frame_adjusted, stencil)
+
+        # cv2.rectangle(frame, (int(boxes[0][0]),int(boxes[0][1])), (int(boxes[0][0])+int(boxes[0][2]),int(int(boxes[0][1])+boxes[0][3])), (0,0,255),3)
+        frame = cv2.bitwise_or(result, frame)
+
+
+        # blurred = cv2.GaussianBlur(cv2.blur(frame,(14,14)),(7,7),0)
+        # blurred = cv2.GaussianBlur(frame,(7,7),0)
+        # mask = np.zeros(blurred.shape, np.uint8)
+        # cv2.rectangle(mask, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (255,255,255),20)
+        # frame = np.where(mask==np.array([255, 255, 255]), blurred, frame)
 
 
         
