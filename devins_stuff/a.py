@@ -1,7 +1,7 @@
 import cv2
 import face_recognition
 import numpy as np
-
+import copy
 
 video_capture = cv2.VideoCapture(0)
 
@@ -24,6 +24,8 @@ has_one_box = False
 while True:
     # Capture frame-by-frame
     ret, frame = video_capture.read()
+
+    fgmask = fgbg.apply(frame)
 
     if not seen_first:
         seen_first = True
@@ -59,7 +61,7 @@ while True:
         dilation = cv2.dilate(less_background,kernel,iterations = 1)
 
         
-    small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
+    small_frame = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
     rgb_small_frame = small_frame[:, :, ::-1]
 
     
@@ -75,10 +77,10 @@ while True:
 
             top, right, bottom, left = location_of_face
             # Scale back up face locations since the frame we detected in was scaled to 1/4 size
-            top *= 2
-            right *= 2
-            bottom *= 2
-            left *= 2
+            top *= 4
+            right *= 4
+            bottom *= 4
+            left *= 4
 
             
             
@@ -114,21 +116,27 @@ while True:
 
             # ret, thresh = cv2.threshold(imgray, 127, 255, 0)
             _, contours, _ = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            contours = [x for x in contours if cv2.contourArea(x) > 1000 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) > 0]
+            target_contours = [x for x in contours if cv2.contourArea(x) > 1000 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) > 0]
 
+            # find moving things
+            data_frame = copy.deepcopy(imgray)
+            # smaller_contours = [x for x in contours if cv2.contourArea(x) > 100 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) < 0]
             
-            # cv2.drawContours(frame, contours, -1, (0,255,0), 3)
+            thresh, no_background = cv2.threshold(data_frame, 100, 255, cv2.THRESH_BINARY)
+            total_dilation = cv2.dilate(no_background,kernel,iterations = 1)
+            # cv2.drawContours(data_frame, smaller_contours, -1, (0,255,0), 3)
 
-            if len(contours) > 0:
-                found_box = cv2.boundingRect(contours[0])
-                inside = center[0] > found_box[0] and center[1] > found_box[1] and center[0] < found_box[0]+found_box[2] and center[1] < found_box[1]+found_box[3]
-                print(center[0] > found_box[0], center[1] > found_box[1], center[0] < found_box[0]+found_box[2], center[1] < found_box[1]+found_box[3])
+            if len(target_contours) > 0:
+                found_box = cv2.boundingRect(target_contours[0])
 
-                if not has_one_box and found_box[2]+found_box[3] < 1000:
+                if not has_one_box and found_box[2]+found_box[3] < 1500:
                     box = found_box
                     has_one_box = True
-                elif has_one_box and (abs(found_box[2]-box[2]) + abs(found_box[3]-box[3]) < 200 and found_box[2]+found_box[3] < 2000) or not inside:
+                if has_one_box and abs(found_box[2]-box[2])/box[2] < 0.2 and abs(found_box[3]-box[3])/box[3] < 0.3 and found_box[2]+found_box[3] < 1500:
                     box = found_box
+                elif top < box[0] or bottom > box[0]+box[2] or left < box[1] or right > box[1]+box[3]:
+                    box = found_box
+                    print("somethings wrong but we are ignoring it because otherwise the user would appear")
                 else:
                     print("something got way too big or too small, ignoring that")
 
@@ -138,6 +146,9 @@ while True:
     if box != None:
         # cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[0]+box[2]), int(box[1]+box[3])), (0,0,255), 2)
         
+        # for debugging...
+        cv2.rectangle(data_frame, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,255),5)
+
         # fill the countor
         # cv2.rectangle(frame, (int(box[0]),int(box[1])), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,0),10)
         cv2.rectangle(frame, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,0),-1)
@@ -164,7 +175,8 @@ while True:
         
 
     try:
-        cv2.imshow('Video', frame)
+        # cv2.imshow('Video', frame)
+        cv2.imshow('Video 2', total_dilation)
     except Exception as e:
         print(e)
     if cv2.waitKey(1) & 0xFF == ord('q'):
