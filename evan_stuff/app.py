@@ -1,9 +1,9 @@
 import cv2
 import face_recognition
 
-video_capture = cv2.VideoCapture(0)
+video_capture = cv2.VideoCapture('evan.mp4')
 
-devin_image = face_recognition.load_image_file("devin_uner.png")
+devin_image = face_recognition.load_image_file("evan.jpg")
 devin_face_encoding = face_recognition.face_encodings(devin_image)[0]
 
 while True:
