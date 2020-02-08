@@ -5,7 +5,6 @@ video_capture = cv2.VideoCapture(0)
 
 devin_image = face_recognition.load_image_file("devin_uner.png")
 devin_face_encoding = face_recognition.face_encodings(devin_image)[0]
-edges = None
 
 while True:
     # Capture frame-by-frame
@@ -33,14 +32,11 @@ while True:
             # Draw a box around the face
             cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
 
-            # now detect their body
-            edges = cv2.Canny(frame,100,200)
-
 
         
 
     try:
-        cv2.imshow('Video', edges)
+        cv2.imshow('Video', frame)
     except Exception as e:
         print(e)
     if cv2.waitKey(1) & 0xFF == ord('q'):
