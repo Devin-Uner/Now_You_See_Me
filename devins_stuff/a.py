@@ -104,6 +104,7 @@ while True:
             # blur = cv2.GaussianBlur(frame,(7,7),0)
             # blur = cv2.blur(frame,(14,14))
             imgray = cv2.cvtColor(less_background,cv2.COLOR_BGR2GRAY)
+            
 
             # draw a line at the bottom of the screen
             cv2.rectangle(imgray, (50, h-20), (w-50, h-10), (0, 0, 0), 10)
@@ -118,13 +119,7 @@ while True:
             _, contours, _ = cv2.findContours(dilation, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
             target_contours = [x for x in contours if cv2.contourArea(x) > 1000 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) > 0]
 
-            # find moving things
-            data_frame = copy.deepcopy(imgray)
-            # smaller_contours = [x for x in contours if cv2.contourArea(x) > 100 and cv2.contourArea(x) < 500000 and cv2.pointPolygonTest(x,center,True) < 0]
             
-            thresh, no_background = cv2.threshold(data_frame, 100, 255, cv2.THRESH_BINARY)
-            total_dilation = cv2.dilate(no_background,kernel,iterations = 1)
-            # cv2.drawContours(data_frame, smaller_contours, -1, (0,255,0), 3)
 
             if len(target_contours) > 0:
                 found_box = cv2.boundingRect(target_contours[0])
@@ -147,7 +142,7 @@ while True:
         # cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[0]+box[2]), int(box[1]+box[3])), (0,0,255), 2)
         
         # for debugging...
-        cv2.rectangle(data_frame, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,255),5)
+        # cv2.rectangle(data_frame, (int(box[0]),int(box[1]-50)), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,255),5)
 
         # fill the countor
         # cv2.rectangle(frame, (int(box[0]),int(box[1])), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,0),10)
@@ -176,7 +171,7 @@ while True:
 
     try:
         # cv2.imshow('Video', frame)
-        cv2.imshow('Video 2', total_dilation)
+        cv2.imshow('Video 2', frame)
     except Exception as e:
         print(e)
     if cv2.waitKey(1) & 0xFF == ord('q'):
