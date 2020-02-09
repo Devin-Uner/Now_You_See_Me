@@ -25,12 +25,58 @@ seen_admin = False
 iteration = 0
 
 calibration_boxes = [
-    [0,0,200,200],
-    [200,200,200,200],
-    [400,400,200,200],
-    [600,600,200,200],
-    [700,700,200,200],
-    [800,800,200,200],
+    [0,0,300,300],
+    [50+0,0,300,300],
+    [0,200,300,300],
+    [50+0,200,300,300],
+    [0,400,300,300],
+    [50+0,400,300,300],
+    [0,600,300,300],
+    [50+0,600,300,300],
+    [0,800,300,300],
+    [50+0,800,300,300],
+    [200,0,300,300],
+    [50+200,0,300,300],
+    [200,200,300,300],
+    [50+200,200,300,300],
+    [200,400,300,300],
+    [50+200,400,300,300],
+    [200,600,300,300],
+    [50+200,600,300,300],
+    [200,800,300,300],
+    [50+200,800,300,300],
+    [400,0,300,300],
+    [50+400,0,300,300],
+    [400,200,300,300],
+    [50+400,200,300,300],
+    [400,400,300,300],
+    [50+400,400,300,300],
+    [400,600,300,300],
+    [50+400,600,300,300],
+    [400,800,300,300],
+    [50+400,800,300,300],
+    [600,0,300,300],
+    [50+600,0,300,300],
+    [600,200,300,300],
+    [50+600,200,300,300],
+    [600,400,300,300],
+    [50+600,400,300,300],
+    [600,600,300,300],
+    [50+600,600,300,300],
+    [600,800,300,300],
+    [50+600,800,300,300],
+    [800,0,300,300],
+    [50+800,0,300,300],
+    [800,200,300,300],
+    [50+800,200,300,300],
+    [800,400,300,300],
+    [50+800,400,300,300],
+    [800,600,300,300],
+    [50+800,600,300,300],
+    [800,800,300,300],
+    [50+800,800,300,300],
+    [0,0,800,800],
+    [500,600,800,800]
 ]
 
 calibration_index = 0
@@ -71,8 +117,13 @@ while True:
         # ret, thresh = cv2.threshold(less_background, 127, 255, 0)
         imgray = cv2.cvtColor(less_background,cv2.COLOR_BGR2GRAY)
         thresh, less_background = cv2.threshold(imgray, 100, 255, cv2.THRESH_BINARY)
-        kernel = np.ones((5,5),np.uint8)
-        dilation = cv2.dilate(less_background,kernel,iterations = 1)
+        # kernel = np.ones((5,5),np.uint8)
+        # dilation = cv2.dilate(less_background,kernel,iterations = 1)
+
+        kernel = np.ones((10,10),np.uint8)
+        dilation = cv2.erode(less_background, kernel, iterations=3)
+        # kernel = np.ones((15,15),np.uint8)
+        # img_erosion = cv2.dilate(img_erosion,kernel,iterations = 4)
 
 
 
@@ -114,7 +165,10 @@ while True:
                 h, w, c = frame.shape
                 
                 # fill a box around the face
-                cv2.rectangle(dilation, (left, top), (right, bottom), (255, 255, 255), -1)
+                cv2.rectangle(dilation, (left, top), (right, int(bottom*1.5)), (255, 255, 255), -1)
+
+                kernel = np.ones((15,15),np.uint8)
+                dilation = cv2.dilate(dilation,kernel,iterations = 3)
 
                 # # blur = cv2.GaussianBlur(frame,(7,7),0)
                 # # blur = cv2.blur(frame,(14,14))
@@ -140,11 +194,15 @@ while True:
             
 
             if len(target_contours) > 0:
+
+
+
                 found_box = cv2.boundingRect(target_contours[0])
                 if found_box[2]*found_box[3] > 2500 and found_box[2]*found_box[3] < 600000:
                     box = found_box
                 cv2.rectangle(data_frame, (int(found_box[0]),int(found_box[1]-100)), (int(found_box[0])+int(found_box[2]),int(int(found_box[1])+found_box[3])), (255,0,0),5)
                 print(found_box[2]*found_box[3])
+
                 # if not has_one_box and found_box[2]+found_box[3] < 1000:
                 #     box = found_box
                 #     has_one_box = True
@@ -203,7 +261,7 @@ while True:
         
 
     try:
-        # cv2.imshow('Video', blurred)
+        # cv2.imshow('Video', data_frame)
         cv2.imshow('Video 2', cv2.resize(np.hstack((blurred, data_frame)), (0,0), fx=0.5, fy=0.5))
     except Exception as e:
         print(e)
