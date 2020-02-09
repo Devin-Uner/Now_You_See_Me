@@ -3,8 +3,9 @@ import face_recognition
 import numpy as np
 import copy
 import time
-
+from urllib.request import urlopen
 # spite devin
+# <3
 
 video_capture = cv2.VideoCapture(0)
 devin_face_encoding = face_recognition.face_encodings(face_recognition.load_image_file("devin_uner.png"))[0]
@@ -26,57 +27,7 @@ iteration = 0
 
 calibration_boxes = [
     [0,0,300,300],
-    [50+0,0,300,300],
-    [0,200,300,300],
-    [50+0,200,300,300],
-    [0,400,300,300],
-    [50+0,400,300,300],
-    [0,600,300,300],
-    [50+0,600,300,300],
-    [0,800,300,300],
-    [50+0,800,300,300],
-    [200,0,300,300],
-    [50+200,0,300,300],
-    [200,200,300,300],
-    [50+200,200,300,300],
-    [200,400,300,300],
-    [50+200,400,300,300],
-    [200,600,300,300],
-    [50+200,600,300,300],
-    [200,800,300,300],
-    [50+200,800,300,300],
-    [400,0,300,300],
-    [50+400,0,300,300],
-    [400,200,300,300],
-    [50+400,200,300,300],
-    [400,400,300,300],
-    [50+400,400,300,300],
-    [400,600,300,300],
-    [50+400,600,300,300],
-    [400,800,300,300],
-    [50+400,800,300,300],
-    [600,0,300,300],
-    [50+600,0,300,300],
-    [600,200,300,300],
-    [50+600,200,300,300],
-    [600,400,300,300],
-    [50+600,400,300,300],
-    [600,600,300,300],
-    [50+600,600,300,300],
-    [600,800,300,300],
-    [50+600,800,300,300],
-    [800,0,300,300],
-    [50+800,0,300,300],
-    [800,200,300,300],
-    [50+800,200,300,300],
-    [800,400,300,300],
-    [50+800,400,300,300],
-    [800,600,300,300],
-    [50+800,600,300,300],
-    [800,800,300,300],
-    [50+800,800,300,300],
-    [0,0,800,800],
-    [500,600,800,800]
+
 ]
 
 calibration_index = 0
@@ -127,12 +78,14 @@ while True:
 
 
 
-    f = open("invis.txt", "r")
-    txt = ""
-    for line in f:
-        txt += line
-    f.close()
-    if "1" in txt:  
+    # f = open("invis.txt", "r")
+    # txt = ""
+    # for line in f:
+    #     txt += line
+    # f.close()
+    content = urlopen("http://ec2-18-220-9-177.us-east-2.compute.amazonaws.com/cgi-bin/get.py").read()
+
+    if "1" in str(content):  
         small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
         rgb_small_frame = small_frame[:, :, ::-1]
 
@@ -262,7 +215,7 @@ while True:
 
     try:
         # cv2.imshow('Video', data_frame)
-        cv2.imshow('Video 2', cv2.resize(np.hstack((blurred, data_frame)), (0,0), fx=0.5, fy=0.5))
+        cv2.imshow('Video 2', cv2.resize(np.hstack((blurred, data_frame)), (0,0), fx=0.75, fy=0.75))
     except Exception as e:
         print(e)
     if cv2.waitKey(1) & 0xFF == ord('q'):
