@@ -4,6 +4,8 @@ import numpy as np
 import copy
 import time
 
+# spite devin
+
 video_capture = cv2.VideoCapture(0)
 devin_face_encoding = face_recognition.face_encodings(face_recognition.load_image_file("devin_uner.png"))[0]
 
