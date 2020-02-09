@@ -4,7 +4,6 @@ import YouTube from "react-youtube"
 
 const Videos = () => {
   const onReady = event => {
-    // access to player in all event handlers via event.target
     event.target.pauseVideo()
   }
 
@@ -26,21 +25,20 @@ const Videos = () => {
 
   return (
     <>
-      <Button onClick={startVideos}>Start the Videos</Button>
-      <Wrapper>
-        <YouTube
-          ref={vidOne}
-          videoId="Zj1muqpEDQI"
-          opts={opts}
-          onReady={onReady}
-        />
-        <YouTube
+      {/* <Wrapper> */}
+      <YouTube
+        ref={vidOne}
+        videoId="Zj1muqpEDQI"
+        opts={opts}
+        onReady={onReady}
+      />
+      {/* <YouTube
           ref={vidTwo}
           videoId="Zj1muqpEDQI"
           opts={opts}
           onReady={onReady}
-        />
-      </Wrapper>
+        /> */}
+      {/* </Wrapper> */}
     </>
   )
 }
@@ -54,7 +52,8 @@ const Button = styled.button`
   padding: 0.5rem;
   border: 2px solid #999;
   border-radius: 5px;
-  margin: 0.5rem auto;
+  margin: 1rem auto;
+  cursor: pointer;
 `
 
 const Wrapper = styled.div`
