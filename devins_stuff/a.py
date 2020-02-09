@@ -31,6 +31,9 @@ calibration_boxes = [
 ]
 
 calibration_index = 0
+multiTracker = None
+
+
 
 while True:
     iteration += 1
@@ -85,7 +88,11 @@ while True:
     # f.close()
     content = urlopen("http://ec2-18-220-9-177.us-east-2.compute.amazonaws.com/cgi-bin/get.py").read()
 
-    if "1" in str(content):  
+    if "0" in str(content):
+
+        multiTracker = cv2.MultiTracker_create()
+        
+
         small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
         rgb_small_frame = small_frame[:, :, ::-1]
 
@@ -154,6 +161,7 @@ while True:
                 if found_box[2]*found_box[3] > 2500 and found_box[2]*found_box[3] < 600000:
                     box = found_box
                 cv2.rectangle(data_frame, (int(found_box[0]),int(found_box[1]-100)), (int(found_box[0])+int(found_box[2]),int(int(found_box[1])+found_box[3])), (255,0,0),5)
+                multiTracker.add(cv2.TrackerCSRT_create(), frame, box)
                 print(found_box[2]*found_box[3])
 
                 # if not has_one_box and found_box[2]+found_box[3] < 1000:
@@ -173,8 +181,11 @@ while True:
             calibration_index += 1
             if calibration_index == len(calibration_boxes):
                 box = None
+    else:
+        success, boxes = multiTracker.update(frame)
+        box = boxes[0]
         print(box)
-        if box != None:
+        if success:
             # cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[0]+box[2]), int(box[1]+box[3])), (0,0,255), 2)
             
             # for debugging...
