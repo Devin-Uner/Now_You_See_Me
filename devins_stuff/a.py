@@ -22,6 +22,17 @@ seen_admin = False
 
 iteration = 0
 
+calibration_boxes = [
+    [0,0,200,200],
+    [200,200,200,200],
+    [400,400,200,200],
+    [600,600,200,200],
+    [700,700,200,200],
+    [800,800,200,200],
+]
+
+calibration_index = 0
+
 while True:
     iteration += 1
     # Capture frame-by-frame
@@ -29,7 +40,6 @@ while True:
     data_frame = copy.deepcopy(frame)
 
     if not seen_first:
-        time.sleep(5)
         seen_first = True
         first_frame = frame
         data_frame = copy.deepcopy(frame)
@@ -45,16 +55,15 @@ while True:
 
         less_background = frame - background
 
-        # hsv = cv2.cvtColor(less_background, cv2.COLOR_BGR2HSV)
-        # h, s, v = cv2.split(hsv)
+        hsv = cv2.cvtColor(less_background, cv2.COLOR_BGR2HSV)
+        h, s, v = cv2.split(hsv)
 
-        # lim = 255 - 1
-        # v[v > lim] = 255
-        # v[v <= lim] += 1
+        v[v > 0] += 1
+        v[v <= 0] = 0
 
-        # final_hsv = cv2.merge((h, s, v))
+        final_hsv = cv2.merge((h, s, v))
 
-        # less_background = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
+        less_background = cv2.cvtColor(final_hsv, cv2.COLOR_HSV2BGR)
 
 
         # ret, thresh = cv2.threshold(less_background, 127, 255, 0)
@@ -70,7 +79,7 @@ while True:
     for line in f:
         txt += line
     f.close()
-    if "1" in txt:    
+    if "1" in txt:  
         small_frame = cv2.resize(frame, (0, 0), fx=0.5, fy=0.5)
         rgb_small_frame = small_frame[:, :, ::-1]
 
@@ -111,8 +120,8 @@ while True:
                 
 
                 # # draw a line at the bottom of the screen
-                # cv2.rectangle(imgray, (50, h-20), (w-50, h-10), (0, 0, 0), 10)
-                # cv2.rectangle(imgray, (50, h-10), (w-50, h), (255, 255, 255), 10)
+                cv2.rectangle(dilation, (50, h-20), (w-50, h-10), (0, 0, 0), 10)
+                cv2.rectangle(dilation, (50, h-10), (w-50, h), (255, 255, 255), 10)
 
 
                 
@@ -130,18 +139,27 @@ while True:
 
             if len(target_contours) > 0:
                 found_box = cv2.boundingRect(target_contours[0])
+                if found_box[2]*found_box[3] > 2500 and found_box[2]*found_box[3] < 600000:
+                    box = found_box
+                cv2.rectangle(data_frame, (int(found_box[0]),int(found_box[1]-100)), (int(found_box[0])+int(found_box[2]),int(int(found_box[1])+found_box[3])), (255,0,0),5)
+                print(found_box[2]*found_box[3])
+                # if not has_one_box and found_box[2]+found_box[3] < 1000:
+                #     box = found_box
+                #     has_one_box = True
+                # if has_one_box and ((abs(found_box[2]-box[2]) < 200 and abs(found_box[3]-box[3]) < 100)) and found_box[2]+found_box[3] < 1000:
+                #     box = found_box
+                # elif not has_one_box or top < box[0] or bottom > box[0]+box[2] or left < box[1] or right > box[1]+box[3]:
+                #     box = found_box
+                #     print("somethings wrong but we are ignoring it because otherwise the user would appear")
 
-                if not has_one_box and found_box[2]+found_box[3] < 1500:
-                    box = found_box
-                    has_one_box = True
-                if has_one_box and abs(found_box[2]-box[2]) < 600 and abs(found_box[3]-box[3]) < 400 and found_box[2]+found_box[3] < 1500:
-                    box = found_box
-                elif not has_one_box or top < box[0] or bottom > box[0]+box[2] or left < box[1] or right > box[1]+box[3]:
-                    box = found_box
-                    print("somethings wrong but we are ignoring it because otherwise the user would appear")
            
 
-
+        if calibration_index < len(calibration_boxes):
+            box = calibration_boxes[calibration_index]
+            print("calibrating with:", box)
+            calibration_index += 1
+            if calibration_index == len(calibration_boxes):
+                box = None
         print(box)
         if box != None:
             # cv2.rectangle(frame, (int(box[0]), int(box[1])), (int(box[0]+box[2]), int(box[1]+box[3])), (0,0,255), 2)
@@ -151,13 +169,13 @@ while True:
 
             # fill the countor
             # cv2.rectangle(frame, (int(box[0]),int(box[1])), (int(box[0])+int(box[2]),int(int(box[1])+box[3])), (0,0,0),10)
-            cv2.rectangle(frame, (int(box[0]-150),int(box[1]-100)), (int(box[0])+int(box[2])+150,int(int(box[1])+box[3])), (0,0,0),-1)
+            cv2.rectangle(frame, (int(box[0]-150),int(box[1]-100)), (int(box[0])+int(box[2])+150,int(int(box[1])+box[3]+100)), (0,0,0),-1)
             # # cv2.fillPoly(frame, pts =boxes[0], color=(0,0,0))
             
             # fill everything in old one with black
             stencil = np.zeros(first_frame.shape).astype(first_frame.dtype)
             # fill the stencil with white in the box
-            cv2.rectangle(stencil, (int(box[0]-150),int(box[1]-100)), (int(box[0])+int(box[2])+150,int(int(box[1])+box[3])), (255,255,255),-1)
+            cv2.rectangle(stencil, (int(box[0]-150),int(box[1]-100)), (int(box[0])+int(box[2])+150,int(int(box[1])+box[3]+100)), (255,255,255),-1)
             # combined the stencil and the first frame to get just the part we want to paste in
             result = cv2.bitwise_and(first_frame, stencil)
 
